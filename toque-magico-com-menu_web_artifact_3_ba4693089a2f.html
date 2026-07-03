@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jogo do Bichinho ✨</title>
+<meta name="theme-color" content="#6a11cb">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height:100%; overflow:hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    overscroll-behavior: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  #stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: twinkle 3s infinite ease-in-out;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  #menu {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+    background: linear-gradient(160deg, #6a11cb 0%, #2575fc 100%);
+  }
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: rgba(24, 9, 51, 0.75);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border-radius: 32px;
+    padding: 32px 24px 28px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 25px 60px -15px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+    text-align: center;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+  h1 span { display: inline-block; margin-left: 4px; }
+  .subtitle {
+    color: #c4a7ff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 2px;
+    margin-bottom: 14px;
+  }
+  .desc {
+    color: rgba(255,255,255,0.82);
+    font-size: 15px;
+    line-height: 1.45;
+    margin: 0 4px 26px;
+  }
+  .choose {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .pet-btn {
+    flex: 0 1 calc(33.333% - 8px);
+    max-width: 108px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 22px;
+    padding: 16px 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.15);
+    min-height: 96px;
+  }
+  .pet-btn:active {
+    transform: scale(0.94);
+    background: rgba(255,255,255,0.16);
+  }
+  .pet-btn .emoji {
+    font-size: 38px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  .pet-btn .label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.95);
+    letter-spacing: 0.1px;
+  }
+
+  #game {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    touch-action: none;
+    display: none;
+  }
+  #score {
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-shadow: 0 3px 12px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+    z-index: 6;
+    pointer-events: none;
+  }
+  #pet {
+    position: absolute;
+    font-size: 72px;
+    line-height: 1;
+    will-change: transform;
+    pointer-events: none;
+    z-index: 4;
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transform: translate3d(-100px, -100px, 0);
+    transition: transform 0.05s linear;
+  }
+  #particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 7;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  @media (max-width: 390px) {
+    .card { padding: 28px 20px; border-radius: 28px; }
+    h1 { font-size: 26px; }
+    .pet-btn { min-height: 88px; padding: 14px 6px; }
+    .pet-btn .emoji { font-size: 34px; }
+    #pet { font-size: 64px; }
+  }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<div id="menu">
+  <div class="card">
+    <h1>Jogo do Bichinho <span>✨</span></h1>
+    <div class="subtitle">Toque Mágico</div>
+    <p class="desc">Igual ao vídeo do gatinho - toque e veja a mágica acontecer!</p>
+    <div class="choose">Escolha seu bichinho</div>
+    <div class="grid">
+      <button class="pet-btn" type="button" data-pet="🐟">
+        <span class="emoji">🐟</span>
+        <span class="label">Peixinho</span>
+      </button>
+      <button class="pet-btn" type="button" data-pet="🐭">
+        <span class="emoji">🐭</span>
+        <span class="label">Ratinho</span>
+      </button>
+      <button class="pet-btn" type="button" data-pet="🐞">
+        <span class="emoji">🐞</span>
+        <span class="label">Joaninha</span>
+      </button>
+      <button class="pet-btn" type="button" data-pet="🦋">
+        <span class="emoji">🦋</span>
+        <span class="label">Borboleta</span>
+      </button>
+      <button class="pet-btn" type="button" data-pet="🐙">
+        <span class="emoji">🐙</span>
+        <span class="label">Polvinho</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="game">
+  <div id="score">Toques: 0</div>
+  <div id="pet"></div>
+  <div id="particles"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const menu = document.getElementById('menu');
+  const game = document.getElementById('game');
+  const petEl = document.getElementById('pet');
+  const scoreEl = document.getElementById('score');
+  const particlesEl = document.getElementById('particles');
+  const starsEl = document.getElementById('stars');
+
+  let gameActive = false;
+  let selectedPet = '🐟';
+  let score = 0;
+  let petX = window.innerWidth / 2;
+  let petY = window.innerHeight / 2;
+  let petVX = 0;
+  let petVY = 0;
+  let pointerX = null;
+  let pointerY = null;
+  let isPointerDown = false;
+  let lastTouch = 0;
+  let audioCtx = null;
+  let rafId = null;
+
+  function createStars() {
+    const count = 90;
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 2.5 + 1;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      s.style.animationDuration = (2 + Math.random() * 3) + 's';
+      starsEl.appendChild(s);
+    }
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function popSound() {
+    try {
+      initAudio();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      const now = audioCtx.currentTime;
+      o.type = 'sine';
+      o.frequency.setValueAtTime(750 + Math.random() * 250, now);
+      o.frequency.exponentialRampToValueAtTime(320, now + 0.09);
+      g.gain.setValueAtTime(0.28, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(now);
+      o.stop(now + 0.12);
+    } catch(e) {}
+  }
+
+  function updateScore() {
+    scoreEl.textContent = 'Toques: ' + score;
+  }
+
+  function createParticles(x, y) {
+    const colors = ['#ff7bfa', '#7b8fff', '#7bffea', '#fff07b', '#ff9a7b'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('span');
+      p.className = 'particle';
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      p.style.background = colors[i % colors.length];
+      p.style.boxShadow = '0 0 10px ' + colors[i % colors.length];
+      particlesEl.appendChild(p);
+      const angle = (Math.PI * 2 * i / 14) + Math.random()*0.5;
+      const dist = 50 + Math.random() * 70;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      p.animate([
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
+      ], {
+        duration: 550 + Math.random()*250,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+      }).onfinish = () => p.remove();
+    }
+  }
+
+  function handleTouch(e) {
+    e.preventDefault();
+    if (!gameActive) return;
+    const now = Date.now();
+    if (now - lastTouch < 40) return;
+    lastTouch = now;
+
+    const point = e.touches ? e.touches[0] : e;
+    pointerX = point.clientX;
+    pointerY = point.clientY;
+    isPointerDown = true;
+
+    score++;
+    updateScore();
+    createParticles(pointerX, pointerY);
+    popSound();
+
+    const dx = petX - pointerX;
+    const dy = petY - pointerY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const push = 6 + Math.random()*2;
+    petVX += (dx / dist) * push;
+    petVY += (dy / dist) * push;
+
+    petEl.style.transform = `translate3d(${petX-36}px, ${petY-36}px, 0) scale(1.15)`;
+    setTimeout(() => { isPointerDown = false; }, 120);
+  }
+
+  function handleMove(e) {
+    if (!gameActive) return;
+    const point = e.touches ? e.touches[0] : e;
+    pointerX = point.clientX;
+    pointerY = point.clientY;
+  }
+
+  function loop() {
+    if (!gameActive) return;
+
+    petVX += (Math.random() - 0.5) * 0.5;
+    petVY += (Math.random() - 0.5) * 0.5;
+
+    if (pointerX !== null) {
+      const dx = petX - pointerX;
+      const dy = petY - pointerY;
+      const dist = Math.hypot(dx, dy);
+      const fleeRadius = 180;
+      if (dist < fleeRadius && dist > 5) {
+        const force = (fleeRadius - dist) / fleeRadius * 1.8;
+        petVX += (dx / dist) * force;
+        petVY += (dy / dist) * force;
+      }
+    }
+
+    petVX *= 0.96;
+    petVY *= 0.96;
+
+    const maxSpeed = 5.5;
+    const speed = Math.hypot(petVX, petVY);
+    if (speed > maxSpeed) {
+      petVX = (petVX / speed) * maxSpeed;
+      petVY = (petVY / speed) * maxSpeed;
+    }
+
+    petX += petVX;
+    petY += petVY;
+
+    const margin = 40;
+    const topLimit = 80;
+    if (petX < margin) { petX = margin; petVX = Math.abs(petVX) * 0.7; }
+    if (petX > window.innerWidth - margin) { petX = window.innerWidth - margin; petVX = -Math.abs(petVX) * 0.7; }
+    if (petY < topLimit) { petY = topLimit; petVY = Math.abs(petVY) * 0.7; }
+    if (petY > window.innerHeight - margin) { petY = window.innerHeight - margin; petVY = -Math.abs(petVY) * 0.7; }
+
+    const scale = isPointerDown ? 0.92 : 1;
+    petEl.style.transform = `translate3d(${petX - 36}px, ${petY - 36}px, 0) scale(${scale})`;
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startGame(pet) {
+    if (gameActive) return;
+    gameActive = true;
+    selectedPet = pet;
+    
+    initAudio();
+    popSound();
+
+    menu.style.display = 'none';
+    game.style.display = 'block';
+
+    petEl.textContent = selectedPet;
+    petX = window.innerWidth * 0.5;
+    petY = window.innerHeight * 0.55;
+    petVX = (Math.random() - 0.5) * 2;
+    petVY = (Math.random() - 0.5) * 2;
+    score = 0;
+    updateScore();
+    pointerX = null;
+    pointerY = null;
+
+    game.addEventListener('pointerdown', handleTouch, { passive: false });
+    game.addEventListener('pointermove', handleMove, { passive: true });
+    game.addEventListener('touchstart', handleTouch, { passive: false });
+
+    if (rafId) cancelAnimationFrame(rafId);
+    loop();
+
+    createParticles(petX, petY);
+  }
+
+  createStars();
+
+  document.querySelectorAll('.pet-btn').forEach(btn => {
+    const pet = btn.dataset.pet;
+    const handler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startGame(pet);
+    };
+    ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+      btn.addEventListener(evt, handler, { passive: false });
+    });
+  });
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('touchmove', e => { if (gameActive) e.preventDefault(); }, { passive: false });
+
+  window.addEventListener('resize', () => {
+    petX = Math.min(Math.max(petX, 40), window.innerWidth - 40);
+    petY = Math.min(Math.max(petY, 80), window.innerHeight - 40);
+  });
+});
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;var a=target.closest?target.closest("a[href]"):null;if(!a||!a.href||!/^https?:\/\//.test(a.href))return;if(a.href.replace(/#.*$/,"")===loc)return;var productId=extractProductId(target)||extractProductId(a);if(!productId)return;e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*")},true)})();</script></body>
+</html>
